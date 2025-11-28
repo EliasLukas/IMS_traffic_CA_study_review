@@ -1,4 +1,5 @@
 #include "utils.hpp"
+#include <random>
 
 const int ROAD_LENGTH = 300; // Use a constant for array size
 
@@ -85,4 +86,55 @@ int count_gap_behind(Car *car, bool look_left){
 
     return gap;
 }
+
+bool left_switch_t1(Car *car){
+    int car_velocity = car->velocity;
+    int gap_ahead = count_gap_ahead(car, true, false);
+    if(gap_ahead < car_velocity){
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool left_switch_t2(Car *car){
+    int car_velocity = car->velocity;
+    int gap_ahead_other = count_gap_ahead(car, false, true);
+    if(gap_ahead_other >= car_velocity){
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool left_switch_t3(Car *car){
+    int min_space_behing = hyperparameters.max_velocity;
+    int gap_behind = count_gap_behind(car, true);
+    if (gap_behind >= min_space_behing){
+        return true;
+    }else{
+        return false;
+    }
+    
+}
+
+bool switch_lane_left(Car *car){
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<float> dis(0.0f, 1.0f);
+
+    float rand_val = dis(gen);
+    float switch_prob = hyperparameters.switch_probability;
+    if(left_switch_t1(car) && left_switch_t2(car) && left_switch_t3(car) && rand_val < switch_prob){
+        return true;
+    } else {
+        return false;
+    }
+}
+
+// todo switch_lane_right
+// todo vymyslet jak se zachovat kdyz oba switche budou valid
+// todo arg parsing
+// todo pravidla pro zmeny rychlosti
+// todo simulation loop
 
