@@ -2,6 +2,7 @@
 #include <random>
 
 const int ROAD_LENGTH = 300; // Use a constant for array size
+const int TICK_COUNT = 100;  // Number of simulation ticks
 
 // dummy data for testing
 Hyperparameters hyperparameters = {.max_velocity = 5,
@@ -15,6 +16,7 @@ Car *road1[ROAD_LENGTH];
 Car *road2[ROAD_LENGTH];
 
 Car **roads[] = {road1, road2};
+Car **roads_copy[] = {road1, road2};
 
 // retuns the gap ahead in the specified lane (current_lane = true for current
 // lane, false for other lane; look_left = true for left lane, false for right
@@ -214,6 +216,46 @@ bool velocity_t3(Car *car) {
 ///////////////////////////////////////////////////
 
 // todo simulation loop
+
+int simulation_tick() {}
+
+int main() {
+  // initialize roads
+  for (int lane = 0; lane < hyperparameters.lane_count; lane++) {
+    for (int pos = 0; pos < hyperparameters.road_length; pos++) {
+      roads[lane][pos] = nullptr;
+      roads_copy[lane][pos] = nullptr;
+    }
+  }
+  // populate roads with cars based on density
+  int total_cars =
+      static_cast<int>(hyperparameters.density * hyperparameters.road_length *
+                       hyperparameters.lane_count);
+  int car_id = 0;
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::uniform_int_distribution<> lane_dis(0, hyperparameters.lane_count - 1);
+  std::uniform_int_distribution<> pos_dis(0, hyperparameters.road_length - 1);
+  while (car_id < total_cars) {
+    int lane = lane_dis(gen);
+    int position = pos_dis(gen);
+    if (roads[lane][position] == nullptr) {
+      Car *new_car = new Car{car_id, lane, position, 0};
+      roads[lane][position] = new_car;
+      car_id++;
+    }
+  }
+  // copy whole roads for simultaneous updates
+  for (int lane = 0; lane < hyperparameters.lane_count; lane++) {
+    for (int pos = 0; pos < hyperparameters.road_length; pos++) {
+      roads_copy[lane][pos] = roads[lane][pos];
+    }
+  }
+  // run simulation for TICK_COUNT ticks
+  for (int tick = 0; tick < TICK_COUNT; tick++) {
+    simulation_tick();
+  }
+}
 
 // todo vymyslet jak se zachovat kdyz oba switche budou valid
 
