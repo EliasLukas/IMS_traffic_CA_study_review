@@ -287,7 +287,75 @@ bool velocity_t3(Car *car)
 
 // todo simulation loop
 
-int simulation_tick() {}
+int simulation_tick(Car ***roads, Car ***roads_copy)
+{
+  // first, resolve lane switching and write
+  for (int lane_index = 0; lane_index < hyperparameters.lane_count; lane_index++)
+  {
+    for (int pos_index = 0; pos_index < ROAD_LENGTH; pos_index++)
+    {
+      if (roads[lane_index][pos_index] == nullptr)
+      {
+        continue;
+      }
+
+      Car *car = roads[lane_index][pos_index];
+      bool left_switch = switch_lane_left(car);
+      bool right_switch = switch_lane_right(car);
+
+      if (left_switch && right_switch)
+      {
+        // switch left
+        roads_copy[lane_index - 1][pos_index] = car;
+        car->lane -= 1;
+        roads_copy[lane_index][pos_index] = nullptr;
+      }
+      else if (left_switch)
+      {
+        // switch left
+        roads_copy[lane_index - 1][pos_index] = car;
+        car->lane -= 1;
+        roads_copy[lane_index][pos_index] = nullptr;
+      }
+      else if (right_switch)
+      {
+        // switch right
+        roads_copy[lane_index + 1][pos_index] = car;
+        car->lane += 1;
+        roads_copy[lane_index][pos_index] = nullptr;
+      }
+      else
+      {
+        // stay
+        roads_copy[lane_index][pos_index] = car;
+      }
+    }
+  }
+
+  // update OG roads by roads_copy updated with lane switch
+  for (int lane = 0; lane < hyperparameters.lane_count; lane++)
+  {
+    for (int pos = 0; pos < hyperparameters.road_length; pos++)
+    {
+      roads[lane][pos] = roads_copy[lane][pos];
+    }
+  }
+
+  for (int lane_index = 0; lane_index < hyperparameters.lane_count; lane_index++)
+  {
+    for (int pos_index = 0; pos_index < ROAD_LENGTH; pos_index++)
+    {
+      if (roads[lane_index][pos_index] == nullptr)
+      {
+        continue;
+      }
+
+      Car *car = roads[lane_index][pos_index];
+    }
+  }
+
+  // we use copy to update OG, TODO must update copy to OG state at the end of tick!
+}
 
 int main()
 {
@@ -331,7 +399,7 @@ int main()
   // run simulation for TICK_COUNT ticks
   for (int tick = 0; tick < TICK_COUNT; tick++)
   {
-    simulation_tick();
+    simulation_tick(roads, roads_copy);
   }
 }
 
