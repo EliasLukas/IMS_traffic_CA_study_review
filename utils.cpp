@@ -1,23 +1,25 @@
 #include "utils.hpp"
 #include <random>
 
-const int ROAD_LENGTH = 300; // Use a constant for array size
-const int TICK_COUNT = 100;  // Number of simulation ticks
+const int ROAD_LENGTH = 100; // Use a constant for array size
+const int TICK_COUNT = 5;    // Number of simulation ticks
 
 // dummy data for testing
-Hyperparameters hyperparameters = {.max_velocity = 5,
-                                   .slowdown_probability = 0.3f,
+Hyperparameters hyperparameters = {.max_velocity = 3,
+                                   .slowdown_probability = 0.00f,
                                    .lane_count = 2,
                                    .road_length = ROAD_LENGTH,
-                                   .density = 0.2f,
-                                   .switch_probability = 0.7f,
+                                   .density = 0.1f,
+                                   .switch_probability = 1.0f,
                                    .symmetric = false};
 
 Car *road1[ROAD_LENGTH];
 Car *road2[ROAD_LENGTH];
+Car *road1_cp[ROAD_LENGTH];
+Car *road2_cp[ROAD_LENGTH];
 
 Car **roads[] = {road1, road2};
-Car **roads_copy[] = {road1, road2};
+Car **roads_copy[] = {road1_cp, road2_cp};
 
 // retuns the gap ahead in the specified lane (current_lane = true for current
 // lane, false for other lane; look_left = true for left lane, false for right
@@ -40,7 +42,6 @@ int count_gap_ahead(Car *car, bool current_lane, bool look_left)
 
   if (lane < 0 || lane >= hyperparameters.lane_count)
   {
-    printf("Invalid lane access in count_gap_ahead: %d\n", lane);
     return -1; // invalid lane
   }
 
@@ -82,7 +83,6 @@ int count_gap_behind(Car *car, bool look_left)
 
   if (lane < 0 || lane >= hyperparameters.lane_count)
   {
-    printf("Invalid lane access in count_gap_behind: %d\n", lane);
     return -2; // invalid lane
   }
 
@@ -112,6 +112,10 @@ bool left_switch_t1(Car *car)
 {
   int car_velocity = car->velocity;
   int gap_ahead = count_gap_ahead(car, true, false);
+  if (gap_ahead < 0)
+  {
+    return false;
+  }
   if (gap_ahead < car_velocity)
   {
     return true;
@@ -126,6 +130,10 @@ bool left_switch_t2(Car *car)
 {
   int car_velocity = car->velocity;
   int gap_ahead_other = count_gap_ahead(car, false, true);
+  if (gap_ahead_other < 0)
+  {
+    return false;
+  }
   if (gap_ahead_other >= car_velocity)
   {
     return true;
@@ -140,6 +148,10 @@ bool left_switch_t3(Car *car)
 {
   int min_space_behind = hyperparameters.max_velocity;
   int gap_behind = count_gap_behind(car, true);
+  if (gap_behind < -1)
+  {
+    return false;
+  }
   if (gap_behind >= min_space_behind)
   {
     return true;
@@ -159,7 +171,7 @@ bool switch_lane_left(Car *car)
   float rand_val = dis(gen);
   float switch_prob = hyperparameters.switch_probability;
   if (left_switch_t1(car) && left_switch_t2(car) && left_switch_t3(car) &&
-      rand_val < switch_prob)
+      rand_val <= switch_prob)
   {
     return true;
   }
@@ -181,6 +193,10 @@ bool right_switch_t1(Car *car)
   }
   int car_velocity = car->velocity;
   int gap_ahead = count_gap_ahead(car, true, true);
+  if (gap_ahead < 0)
+  {
+    return false;
+  }
   if (gap_ahead < car_velocity)
   {
     return true;
@@ -195,6 +211,10 @@ bool right_switch_t2(Car *car)
 {
   int car_velocity = car->velocity;
   int gap_ahead_other = count_gap_ahead(car, false, false);
+  if (gap_ahead_other < 0)
+  {
+    return false;
+  }
   if (gap_ahead_other >= car_velocity)
   {
     return true;
@@ -209,6 +229,10 @@ bool right_switch_t3(Car *car)
 {
   int min_space_behind = hyperparameters.max_velocity;
   int gap_behind = count_gap_behind(car, false);
+  if (gap_behind < -1)
+  {
+    return false;
+  }
   if (gap_behind >= min_space_behind)
   {
     return true;
@@ -228,7 +252,7 @@ bool switch_lane_right(Car *car)
   float rand_val = dis(gen);
   float switch_prob = hyperparameters.switch_probability;
   if (right_switch_t1(car) && right_switch_t2(car) && right_switch_t3(car) &&
-      rand_val < switch_prob)
+      rand_val <= switch_prob)
   {
     return true;
   }
@@ -273,7 +297,7 @@ bool velocity_t3(Car *car)
   std::uniform_real_distribution<float> dis(0.0f, 1.0f);
 
   float rand_val = dis(gen);
-  if (car->velocity > 0 && rand_val < hyperparameters.slowdown_probability)
+  if (car->velocity > 0 && rand_val <= hyperparameters.slowdown_probability)
   {
     return true;
   }
@@ -285,11 +309,8 @@ bool velocity_t3(Car *car)
 
 ///////////////////////////////////////////////////
 
-// todo simulation loop
-
-int simulation_tick(Car ***roads, Car ***roads_copy)
+void resolve_lane_switch_write_to_copy()
 {
-  // first, resolve lane switching and write
   for (int lane_index = 0; lane_index < hyperparameters.lane_count; lane_index++)
   {
     for (int pos_index = 0; pos_index < ROAD_LENGTH; pos_index++)
@@ -331,8 +352,10 @@ int simulation_tick(Car ***roads, Car ***roads_copy)
       }
     }
   }
+}
 
-  // update OG roads by roads_copy updated with lane switch
+void update_roads_by_roads_copy()
+{
   for (int lane = 0; lane < hyperparameters.lane_count; lane++)
   {
     for (int pos = 0; pos < hyperparameters.road_length; pos++)
@@ -340,7 +363,10 @@ int simulation_tick(Car ***roads, Car ***roads_copy)
       roads[lane][pos] = roads_copy[lane][pos];
     }
   }
+}
 
+void update_car_velocity()
+{
   for (int lane_index = 0; lane_index < hyperparameters.lane_count; lane_index++)
   {
     for (int pos_index = 0; pos_index < ROAD_LENGTH; pos_index++)
@@ -351,10 +377,79 @@ int simulation_tick(Car ***roads, Car ***roads_copy)
       }
 
       Car *car = roads[lane_index][pos_index];
+
+      if (velocity_t1(car))
+      {
+        car->velocity += 1;
+      }
+      if (velocity_t2(car))
+      {
+        car->velocity = count_gap_ahead(car, true, false);
+      }
+      if (velocity_t3(car))
+      {
+        car->velocity -= 1;
+      }
     }
   }
+}
 
-  // we use copy to update OG, TODO must update copy to OG state at the end of tick!
+void update_position_in_copy()
+{
+  for (int lane_index = 0; lane_index < hyperparameters.lane_count; lane_index++)
+  {
+    for (int pos_index = 0; pos_index < ROAD_LENGTH; pos_index++)
+    {
+      if (roads[lane_index][pos_index] == nullptr)
+      {
+        continue;
+      }
+
+      Car *car = roads[lane_index][pos_index];
+      roads_copy[lane_index][pos_index] = nullptr;
+
+      roads_copy[lane_index][(pos_index + car->velocity) % ROAD_LENGTH] = car;
+      car->position = (car->position + car->velocity) % ROAD_LENGTH;
+    }
+  }
+}
+
+// todo simulation loop
+
+void simulation_tick(Car ***roads, Car ***roads_copy)
+{
+  // first, resolve lane switching and write
+  resolve_lane_switch_write_to_copy();
+  // update OG roads by roads_copy updated with lane switch
+  update_roads_by_roads_copy();
+  // change car velocity according to rules
+  update_car_velocity();
+  // update position in loop
+  update_position_in_copy();
+  // update OG roads by roads_copy updated with lane switch
+  update_roads_by_roads_copy();
+}
+
+void after_update_print_beta()
+{
+  for (int lane = 0; lane < hyperparameters.lane_count; lane++)
+  {
+    for (int pos = 0; pos < hyperparameters.road_length; pos++)
+    {
+      Car *car = roads[lane][pos];
+
+      if (car == nullptr)
+      {
+        printf("-");
+      }
+      else
+      {
+        printf("%d", car->velocity);
+      }
+    }
+    printf("\n");
+  }
+  printf("\n\n\n");
 }
 
 int main()
@@ -399,6 +494,7 @@ int main()
   // run simulation for TICK_COUNT ticks
   for (int tick = 0; tick < TICK_COUNT; tick++)
   {
+    after_update_print_beta();
     simulation_tick(roads, roads_copy);
   }
 }
