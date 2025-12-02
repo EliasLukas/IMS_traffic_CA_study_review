@@ -47,21 +47,21 @@ bool left_switch_t1(const SimulationState &S, Car *car) {
   if (gap_ahead < 0) {
     return false;
   }
-  return gap_ahead < car->velocity;
+  return gap_ahead < car->velocity + 1;
 }
 bool left_switch_t2(const SimulationState &S, Car *car) {
   int gap_ahead_other = count_gap_ahead(S, car, false, true);
   if (gap_ahead_other < 0) {
     return false;
   }
-  return gap_ahead_other >= car->velocity;
+  return gap_ahead_other > car->velocity + 1;
 }
 bool left_switch_t3(const SimulationState &S, Car *car) {
   int gap_behind = count_gap_behind(S, car, true);
   if (gap_behind < -1) {
     return false;
   }
-  return gap_behind >= S.hyper.max_velocity;
+  return gap_behind > S.hyper.max_velocity;
 }
 
 bool right_switch_t1(const SimulationState &S, Car *car) {
@@ -72,21 +72,21 @@ bool right_switch_t1(const SimulationState &S, Car *car) {
   if (gap_ahead < 0) {
     return false;
   }
-  return gap_ahead < car->velocity;
+  return gap_ahead < car->velocity + 1;
 }
 bool right_switch_t2(const SimulationState &S, Car *car) {
   int gap_ahead_other = count_gap_ahead(S, car, false, false);
   if (gap_ahead_other < 0) {
     return false;
   }
-  return gap_ahead_other >= car->velocity;
+  return gap_ahead_other > car->velocity + 1;
 }
 bool right_switch_t3(const SimulationState &S, Car *car) {
   int gap_behind = count_gap_behind(S, car, false);
   if (gap_behind < -1) {
     return false;
   }
-  return gap_behind >= S.hyper.max_velocity;
+  return gap_behind > S.hyper.max_velocity;
 }
 
 bool switch_lane_left(const SimulationState &S, Car *car) {
