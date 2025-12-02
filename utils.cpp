@@ -10,7 +10,7 @@ Hyperparameters hyperparameters = {.max_velocity = 3,
                                    .lane_count = 2,
                                    .road_length = ROAD_LENGTH,
                                    .density = 0.1f,
-                                   .switch_probability = 1.0f,
+                                   .switch_probability = 0.99f,
                                    .symmetric = false};
 
 Car *road1[ROAD_LENGTH];
@@ -51,7 +51,7 @@ int count_gap_ahead(Car *car, bool current_lane, bool look_left)
   Car **current_road = roads[lane];
   int road_length = hyperparameters.road_length;
 
-  for (int i = 1; i <= hyperparameters.max_velocity; i++)
+  for (int i = 1; i <= hyperparameters.max_velocity + 1; i++)
   {
     int check_position = (position + i) % road_length;
     if (current_road[check_position] == nullptr)
@@ -92,7 +92,7 @@ int count_gap_behind(Car *car, bool look_left)
   Car **current_road = roads[lane];
   int road_length = hyperparameters.road_length;
 
-  for (int i = 0; i <= hyperparameters.max_velocity; i++)
+  for (int i = 0; i <= hyperparameters.max_velocity + 1; i++)
   {
     int check_position = (position - i + road_length) % road_length;
     if (current_road[check_position] == nullptr)

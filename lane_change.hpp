@@ -17,4 +17,6 @@ bool switch_lane_left(const SimulationState &S, Car *car);
 bool switch_lane_right(const SimulationState &S, Car *car);
 
 void resolve_lane_switch_write_to_copy(SimulationState &S);
-void update_roads_by_roads_copy(SimulationState &S);
+
+void clear_copy(SimulationState &S);
+void copy_into_roads(SimulationState &S);
