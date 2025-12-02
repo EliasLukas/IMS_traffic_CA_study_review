@@ -1,1 +1,3 @@
 *.exe
+*.o
+ims_traffic
