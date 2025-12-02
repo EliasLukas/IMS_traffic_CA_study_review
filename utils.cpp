@@ -116,7 +116,7 @@ bool left_switch_t1(Car *car)
   {
     return false;
   }
-  if (gap_ahead < car_velocity)
+  if (gap_ahead < car_velocity + 1)
   {
     return true;
   }
@@ -134,7 +134,7 @@ bool left_switch_t2(Car *car)
   {
     return false;
   }
-  if (gap_ahead_other >= car_velocity)
+  if (gap_ahead_other > car_velocity + 1)
   {
     return true;
   }
@@ -152,7 +152,7 @@ bool left_switch_t3(Car *car)
   {
     return false;
   }
-  if (gap_behind >= min_space_behind)
+  if (gap_behind > min_space_behind)
   {
     return true;
   }
@@ -197,7 +197,7 @@ bool right_switch_t1(Car *car)
   {
     return false;
   }
-  if (gap_ahead < car_velocity)
+  if (gap_ahead < car_velocity + 1)
   {
     return true;
   }
@@ -215,7 +215,7 @@ bool right_switch_t2(Car *car)
   {
     return false;
   }
-  if (gap_ahead_other >= car_velocity)
+  if (gap_ahead_other > car_velocity + 1)
   {
     return true;
   }
@@ -233,7 +233,7 @@ bool right_switch_t3(Car *car)
   {
     return false;
   }
-  if (gap_behind >= min_space_behind)
+  if (gap_behind > min_space_behind)
   {
     return true;
   }
