@@ -10,9 +10,8 @@ static FILE *g_right_pbm = nullptr;
 static bool g_pbm_open = false;
 
 // Dimensions and counters
-static int g_total_ticks = 0; // ticks configured at init
-static int g_tick_index =
-    0;                         // how many times gather_data was called (router tick)
+static int g_total_ticks = 0;  // ticks configured at init
+static int g_tick_index = 0;   // how many times gather_data was called (router tick)
 static int g_written_rows = 0; // rows written to PBMs so far
 static int g_pbm_width = 0;    // min(road_length, 400)
 static int g_pbm_height = 0;   // total_ticks - settle
@@ -234,7 +233,7 @@ void calculate_flow(const SimulationState &S)
     const double avg_lane_changes_per_site_and_timestep_and_density = avg_lane_change_per_site_and_time / S.hyper.density;
     const double avg_changes_per_car = static_cast<double>(lane_swaps) / (S.hyper.density * S.hyper.lane_count * S.hyper.road_length * gather_cnt);
 
-    std::printf("%f, %f, %f, %f, %f, %f\n", left_flow, right_flow, avg_flow, avg_lane_change_per_site_and_time, avg_lane_changes_per_site_and_timestep_and_density, avg_changes_per_car);
+    std::printf("%f, %f, %f, %f, %f, %f,\n", left_flow, right_flow, avg_flow, avg_lane_change_per_site_and_time, avg_lane_changes_per_site_and_timestep_and_density, avg_changes_per_car);
 }
 
 void gather_close()
