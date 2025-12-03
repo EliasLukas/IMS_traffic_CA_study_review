@@ -17,9 +17,10 @@ static int g_pbm_width = 0;    // min(road_length, 400)
 static int g_pbm_height = 0;   // total_ticks - settle
 static int velocity_sum_left = 0;
 static int velocity_sum_right = 0;
+static int lane_swaps = 0;
 static int g_flow_samples = 0; // number of times sum_for_flow was recorded
 // Settling period before we start writing PBM rows
-static const int kSettleTicks = 1000;
+static const int k_settle_ticks = 1000;
 
 // Open PBM images once, writing headers with known width/height
 static void open_pbm_once(int width, int height)
@@ -93,7 +94,7 @@ static void gather_position_time_data(const SimulationState &S)
     if (!g_pbm_open)
     {
         g_pbm_width = std::min(S.hyper.road_length, 400);
-        g_pbm_height = std::max(0, g_total_ticks - kSettleTicks);
+        g_pbm_height = std::max(0, g_total_ticks - k_settle_ticks);
         if (g_pbm_height <= 0)
             return; // nothing to write for too-short runs
         open_pbm_once(g_pbm_width, g_pbm_height);
@@ -121,15 +122,13 @@ static void gather_position_time_data(const SimulationState &S)
 
 void gather_init(const SimulationState &S, int total_ticks)
 {
-    if (!S.hyper.position_time_data)
-        return;
-
     g_total_ticks = total_ticks;
     g_tick_index = 0;
     g_written_rows = 0;
     g_flow_samples = 0;
     velocity_sum_left = 0;
     velocity_sum_right = 0;
+    lane_swaps = 0;
 
     // Don’t open PBMs here; we open lazily after settling with known height.
     g_pbm_open = false;
@@ -137,7 +136,7 @@ void gather_init(const SimulationState &S, int total_ticks)
     g_right_pbm = nullptr;
 
     g_pbm_width = std::min(S.hyper.road_length, 400);
-    g_pbm_height = std::max(0, total_ticks - kSettleTicks);
+    g_pbm_height = std::max(0, total_ticks - k_settle_ticks);
 }
 
 void sum_for_flow(const SimulationState &S)
@@ -182,7 +181,7 @@ void gather_data(const SimulationState &S)
     // One call per simulation tick
     ++g_tick_index;
 
-    if (g_tick_index < kSettleTicks)
+    if (g_tick_index < k_settle_ticks)
         return;
 
     if (S.hyper.position_time_data)
@@ -202,6 +201,12 @@ void gather_data(const SimulationState &S)
     // if (S.hyper.some_other_flag) { gather_other_mode(S); }
 }
 
+void register_event_lane_swap()
+{
+    if (g_tick_index >= k_settle_ticks)
+        lane_swaps++;
+}
+
 void calculate_flow(const SimulationState &S)
 {
     if (!S.hyper.csv_output)
@@ -212,12 +217,19 @@ void calculate_flow(const SimulationState &S)
         return;
     }
 
+    // flow stats
     const double denom = static_cast<double>(g_flow_samples) * static_cast<double>(S.hyper.road_length);
     const double left_flow = static_cast<double>(velocity_sum_left) / denom;
     const double right_flow = static_cast<double>(velocity_sum_right) / denom;
     const double avg_flow = (left_flow + right_flow) * 0.5;
 
-    std::printf("%f, %f, %f,\n", left_flow, right_flow, avg_flow);
+    // lane changes per site and time step stats
+
+    int gather_cnt = g_total_ticks - k_settle_ticks;
+    printf("gather_cnt %d, lane_swaps %d\n", gather_cnt, lane_swaps);
+    const double avg_lane_change_per_site_and_time = static_cast<double>(lane_swaps) / (S.hyper.lane_count * S.hyper.road_length * gather_cnt);
+
+    std::printf("%f, %f, %f, %f\n", left_flow, right_flow, avg_flow, avg_lane_change_per_site_and_time);
 }
 
 void gather_close()

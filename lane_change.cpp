@@ -1,4 +1,5 @@
 #include "lane_change.hpp"
+#include "data_gathering.hpp"
 #include <random>
 
 int count_gap_ahead(const SimulationState &S, Car *car, bool current_lane,
@@ -146,6 +147,7 @@ bool switch_lane_left(const SimulationState &S, Car *car)
   return left_switch_t1(S, car) && left_switch_t2(S, car) &&
          left_switch_t3(S, car) && rand_val <= S.hyper.switch_probability;
 }
+
 bool switch_lane_right(const SimulationState &S, Car *car)
 {
   if (car->lane >= S.hyper.lane_count - 1)
@@ -175,19 +177,23 @@ void resolve_lane_switch_write_to_copy(SimulationState &S)
 
       if (left_switch && right_switch)
       {
-        // Match utils.cpp: prefer left on tie
-        S.roads_copy[lane_index - 1][pos_index] = car;
-        car->lane -= 1;
+        // can not happen since max 2 lanes are permitted
       }
       else if (left_switch)
       {
         S.roads_copy[lane_index - 1][pos_index] = car;
         car->lane -= 1;
+
+        // statistics gathering
+        register_event_lane_swap();
       }
       else if (right_switch)
       {
         S.roads_copy[lane_index + 1][pos_index] = car;
         car->lane += 1;
+
+        // statistics gathering
+        register_event_lane_swap();
       }
       else
       {
