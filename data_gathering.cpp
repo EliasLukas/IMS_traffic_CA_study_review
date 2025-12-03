@@ -225,11 +225,13 @@ void calculate_flow(const SimulationState &S)
 
     // lane changes per site and time step stats
 
-    int gather_cnt = g_total_ticks - k_settle_ticks;
-    printf("gather_cnt %d, lane_swaps %d\n", gather_cnt, lane_swaps);
+    long gather_cnt = g_total_ticks - k_settle_ticks;
     const double avg_lane_change_per_site_and_time = static_cast<double>(lane_swaps) / (S.hyper.lane_count * S.hyper.road_length * gather_cnt);
 
-    std::printf("%f, %f, %f, %f\n", left_flow, right_flow, avg_flow, avg_lane_change_per_site_and_time);
+    const double avg_lane_changes_per_site_and_timestep_and_density = avg_lane_change_per_site_and_time / S.hyper.density;
+    const double avg_changes_per_car = static_cast<double>(lane_swaps) / (S.hyper.density * S.hyper.lane_count * S.hyper.road_length * gather_cnt);
+
+    std::printf("%f, %f, %f, %f, %f, %f\n", left_flow, right_flow, avg_flow, avg_lane_change_per_site_and_time, avg_lane_changes_per_site_and_timestep_and_density, avg_changes_per_car);
 }
 
 void gather_close()
