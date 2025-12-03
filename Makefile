@@ -10,7 +10,8 @@ SRCS := \
   state.cpp \
   lane_change.cpp \
   velocity.cpp \
-  simulation.cpp
+  simulation.cpp \
+  data_gathering.cpp
 
 # Object files
 OBJS := $(SRCS:.cpp=.o)

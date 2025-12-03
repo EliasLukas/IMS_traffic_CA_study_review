@@ -1,6 +1,7 @@
 #include "simulation.hpp"
 #include "state.hpp"
 #include "types.hpp"
+#include "data_gathering.hpp"
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -23,13 +24,15 @@ int main(int argc, char **argv)
 {
   int road_length = 100;
   int ticks = 5;
-  SimulationState S{.hyper = {.max_velocity = 3,
-                              .slowdown_probability = 0.00f,
-                              .lane_count = 2,
-                              .road_length = road_length,
-                              .density = 0.1f,
-                              .switch_probability = 1.0f,
-                              .symmetric = false},
+  SimulationState S{.hyper = {
+                        .max_velocity = 3,
+                        .slowdown_probability = 0.00f,
+                        .lane_count = 2,
+                        .road_length = road_length,
+                        .density = 0.1f,
+                        .switch_probability = 1.0f,
+                        .symmetric = false,
+                        .position_time_data = false},
                     .roads = {nullptr, nullptr},
                     .roads_copy = {nullptr, nullptr},
                     .road_storage = {nullptr, nullptr},
@@ -61,6 +64,10 @@ int main(int argc, char **argv)
     else if (std::strcmp(argv[i], "--symmetric") == 0 && i + 1 < argc)
     {
       S.hyper.symmetric = std::atoi(argv[++i]) != 0;
+    }
+    else if (std::strcmp(argv[i], "--position-time-data") == 0 && i + 1 < argc)
+    {
+      S.hyper.position_time_data = std::atoi(argv[++i]) != 0;
     }
     else if (std::strcmp(argv[i], "--road-length") == 0 && i + 1 < argc)
     {
@@ -129,12 +136,16 @@ int main(int argc, char **argv)
 
   init_state(S);
   populate_cars(S);
+  gather_init(S, ticks);
 
   for (int tick = 0; tick < ticks; ++tick)
   {
-    print_state(S);
+    // print_state(S);
     simulation_tick(S);
+    gather_data(S);
   }
+
+  gather_close();
 
   return 0;
 }

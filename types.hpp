@@ -1,14 +1,16 @@
 #pragma once
 #include <cstdio>
 
-struct Car {
+struct Car
+{
   int id;
   int lane;
   int position;
   int velocity;
 };
 
-struct Hyperparameters {
+struct Hyperparameters
+{
   int max_velocity;
   float slowdown_probability;
   int lane_count;
@@ -16,9 +18,11 @@ struct Hyperparameters {
   float density;
   float switch_probability;
   bool symmetric;
+  bool position_time_data;
 };
 
-struct SimulationState {
+struct SimulationState
+{
   Hyperparameters hyper;
   Car **roads[2];
   Car **roads_copy[2];

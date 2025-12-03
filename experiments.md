@@ -9,9 +9,13 @@ fig 1:
     l = lo = car velocity + 1
     lo back = v max
     p change = 1
+    p slow = 0.5
 
     shows 2 plots, 1 for each lane (left, right)
     shows 400 sites in 400 time steps
+
+    gathered with:
+    .\ims_traffic.exe --position-time-data 1 --road-length 12000 --ticks 1400 --max-velocity 5 --density 0.09 --slowdown-prob 0.5 --symmetric 1
 
 fig 2:
     assymetric fig 1 setup
@@ -20,9 +24,13 @@ fig 2:
     l = lo = car velocity + 1
     lo back = v max
     p change = 1
+    p slow = 0.5
 
     shows 2 plots, 1 for each lane (left, right)
     shows 400 sites in 400 time steps
+
+    gathered with:
+    .\ims_traffic.exe --position-time-data 1 --road-length 12000 --ticks 1400 --max-velocity 5 --density 0.09 --slowdown-prob 0.5
 
 
 simulation setup for further experiments
