@@ -84,5 +84,11 @@ fig 11 pchange = 1, lookback for sym and asym for LB = 0 / 4
 fig 12,13 = 400x400 lookback = 0 road in time evolution (like 1,2) for sym and asym left right lanes
 
 
+fig 12: 
+.\ims_traffic.exe --position-time-data 1 --road-length 12000 --ticks 1400 --max-velocity 5 --density 0.09 --slowdown-prob 0.5 --symmetric 1 --lookback-zero 1
+
+fig 13:
+.\ims_traffic.exe --position-time-data 1 --road-length 12000 --ticks 1400 --max-velocity 5 --density 0.09 --slowdown-prob 0.5 --lookback-zero 1
+
 
             

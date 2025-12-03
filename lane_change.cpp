@@ -79,7 +79,14 @@ bool left_switch_t3(const SimulationState &S, Car *car)
   {
     return false;
   }
-  return gap_behind > S.hyper.max_velocity;
+  if (S.hyper.lookback_zero)
+  {
+    return gap_behind >= 0;
+  }
+  else
+  {
+    return gap_behind > S.hyper.max_velocity;
+  }
 }
 
 bool right_switch_t1(const SimulationState &S, Car *car)
@@ -111,7 +118,21 @@ bool right_switch_t3(const SimulationState &S, Car *car)
   {
     return false;
   }
-  return gap_behind > S.hyper.max_velocity;
+  if (S.hyper.lookback_zero)
+  {
+    return gap_behind >= 0;
+  }
+  else
+  {
+    return gap_behind > S.hyper.max_velocity;
+  }
+}
+
+static std::mt19937 &get_rng()
+{
+  static std::random_device rd;
+  static std::mt19937 gen(rd());
+  return gen;
 }
 
 bool switch_lane_left(const SimulationState &S, Car *car)
@@ -120,10 +141,8 @@ bool switch_lane_left(const SimulationState &S, Car *car)
   {
     return false;
   }
-  std::random_device rd;
-  std::mt19937 gen(rd());
   std::uniform_real_distribution<float> dis(0.0f, 1.0f);
-  float rand_val = dis(gen);
+  float rand_val = dis(get_rng());
   return left_switch_t1(S, car) && left_switch_t2(S, car) &&
          left_switch_t3(S, car) && rand_val <= S.hyper.switch_probability;
 }
@@ -133,10 +152,8 @@ bool switch_lane_right(const SimulationState &S, Car *car)
   {
     return false;
   }
-  std::random_device rd;
-  std::mt19937 gen(rd());
   std::uniform_real_distribution<float> dis(0.0f, 1.0f);
-  float rand_val = dis(gen);
+  float rand_val = dis(get_rng());
   return right_switch_t1(S, car) && right_switch_t2(S, car) &&
          right_switch_t3(S, car) && rand_val <= S.hyper.switch_probability;
 }
