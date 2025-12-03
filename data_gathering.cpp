@@ -223,7 +223,7 @@ void calculate_flow(const SimulationState &S)
                          static_cast<double>(S.hyper.road_length);
     const double left_flow = static_cast<double>(velocity_sum_left) / denom;
     const double right_flow = static_cast<double>(velocity_sum_right) / denom;
-    const double avg_flow = (left_flow + right_flow) * 0.5;
+    const double avg_flow = (left_flow + right_flow) / (S.hyper.lane_count);
 
     // lane changes per site and time step stats
 
