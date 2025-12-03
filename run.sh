@@ -66,7 +66,7 @@ LOOPS=1
 TICKS=5000
 ROAD_LEN=20000
 MAX_V=5
-SLOWDOWN=1
+SLOWDOWN=0.5
 DRY_RUN=0
 OUT1=""
 OUT2=""
@@ -155,39 +155,39 @@ case "$FIGURE" in
         run_sweep_to_file "fig2.csv" --symmetric 0 --switch-prob 1.0
         ;;
 	f3)
-		run_sweep_to_file "fig3_asym_p1.csv" --symmetric 0 --switch-prob 1
-		run_sweep_to_file "fig3_sym_p1.csv" --symmetric 1 --switch-prob 1
+		run_sweep_to_file "fig3_asym_p1.csv" --symmetric 0 --switch-prob 1.0
+		run_sweep_to_file "fig3_sym_p1.csv" --symmetric 1 --switch-prob 1.0
 		;;
     f4)
-        run_sweep_to_file "fig4_sym.csv" --symmetric 1 --switch-prob 1
-        run_sweep_to_file "fig4_asym.csv" --symmetric 0 --switch-prob 1
-        run_sweep_to_file "fig4_single.csv" --lane-count 1 --switch-prob 1
+        run_sweep_to_file "fig4_sym.csv" --symmetric 1 --switch-prob 1.0
+        run_sweep_to_file "fig4_asym.csv" --symmetric 0 --switch-prob 1.0
+        run_sweep_to_file "fig4_single.csv" --lane-count 1 --switch-prob 1.0
         ;;
     f5)
-        run_sweep_to_file "fig5_asym_p1.csv" --symmetric 0 --switch-prob 1
-		run_sweep_to_file "fig5_sym_p1.csv" --symmetric 1 --switch-prob 1
+        run_sweep_to_file "fig5_asym_p1.csv" --symmetric 0 --switch-prob 1.0
+		run_sweep_to_file "fig5_sym_p1.csv" --symmetric 1 --switch-prob 1.0
         run_sweep_to_file "fig5_asym_p05.csv" --symmetric 0 --switch-prob 0.5
 		run_sweep_to_file "fig5_sym_p05.csv" --symmetric 1 --switch-prob 0.5
         ;;
     f6)
-        run_sweep_to_file "fig6_sym.csv" --symmetric 1 --switch-prob 1
-        run_sweep_to_file "fig6_asym.csv" --symmetric 0 --switch-prob 1
+        run_sweep_to_file "fig6_sym.csv" --symmetric 1 --switch-prob 1.0
+        run_sweep_to_file "fig6_asym.csv" --symmetric 0 --switch-prob 1.0
         ;;
     f7)
-        run_sweep_to_file "fig7_asym_p1.csv" --symmetric 0 --switch-prob 1
-		run_sweep_to_file "fig7_sym_p1.csv" --symmetric 1 --switch-prob 1
+        run_sweep_to_file "fig7_asym_p1.csv" --symmetric 0 --switch-prob 1.0
+		run_sweep_to_file "fig7_sym_p1.csv" --symmetric 1 --switch-prob 1.0
         run_sweep_to_file "fig7_asym_p05.csv" --symmetric 0 --switch-prob 0.5
 		run_sweep_to_file "fig7_sym_p05.csv" --symmetric 1 --switch-prob 0.5
         ;;
     f10)
-        run_sweep_to_file "fig10_sym.csv" --symmetric 1 --switch-prob 1
-        run_sweep_to_file "fig10_asym.csv" --symmetric 0 --switch-prob 1
+        run_sweep_to_file "fig10_sym.csv" --symmetric 1 --switch-prob 1.0
+        run_sweep_to_file "fig10_asym.csv" --symmetric 0 --switch-prob 1.0
         ;;
     f11)
-        run_sweep_to_file "fig11_asym_lb0.csv" --symmetric 0 --switch-prob 1 --lookback-zero 1
-        run_sweep_to_file "fig11_sym_lb0.csv" --symmetric 1 --switch-prob 1 --lookback-zero 1
-        run_sweep_to_file "fig11_asym_lb5.csv" --symmetric 0 --switch-prob 1
-        run_sweep_to_file "fig11_sym_lb5.csv" --symmetric 1 --switch-prob 1
+        run_sweep_to_file "fig11_asym_lb0.csv" --symmetric 0 --switch-prob 1.0 --lookback-zero 1
+        run_sweep_to_file "fig11_sym_lb0.csv" --symmetric 1 --switch-prob 1.0 --lookback-zero 1
+        run_sweep_to_file "fig11_asym_lb5.csv" --symmetric 0 --switch-prob 1.0
+        run_sweep_to_file "fig11_sym_lb5.csv" --symmetric 1 --switch-prob 1.0
         ;;
 	sym_p1)
 		run_sweep_to_file "sym_p1.csv" --symmetric 1 --switch-prob 1.0
