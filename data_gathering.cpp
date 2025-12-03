@@ -1,7 +1,7 @@
 #include "data_gathering.hpp"
 #include "types.hpp"
-#include <cstdio>
 #include <algorithm>
+#include <cstdio>
 #include <vector>
 
 // PBM outputs
@@ -10,8 +10,9 @@ static FILE *g_right_pbm = nullptr;
 static bool g_pbm_open = false;
 
 // Dimensions and counters
-static int g_total_ticks = 0;  // ticks configured at init
-static int g_tick_index = 0;   // how many times gather_data was called (router tick)
+static int g_total_ticks = 0; // ticks configured at init
+static int g_tick_index =
+    0;                         // how many times gather_data was called (router tick)
 static int g_written_rows = 0; // rows written to PBMs so far
 static int g_pbm_width = 0;    // min(road_length, 400)
 static int g_pbm_height = 0;   // total_ticks - settle
@@ -175,7 +176,8 @@ void sum_for_flow(const SimulationState &S)
     ++g_flow_samples;
 }
 
-// Router: call specific data gathering based on run arguments (flags in S.hyper)
+// Router: call specific data gathering based on run arguments (flags in
+// S.hyper)
 void gather_data(const SimulationState &S)
 {
     // One call per simulation tick
@@ -218,7 +220,8 @@ void calculate_flow(const SimulationState &S)
     }
 
     // flow stats
-    const double denom = static_cast<double>(g_flow_samples) * static_cast<double>(S.hyper.road_length);
+    const double denom = static_cast<double>(g_flow_samples) *
+                         static_cast<double>(S.hyper.road_length);
     const double left_flow = static_cast<double>(velocity_sum_left) / denom;
     const double right_flow = static_cast<double>(velocity_sum_right) / denom;
     const double avg_flow = (left_flow + right_flow) * 0.5;
