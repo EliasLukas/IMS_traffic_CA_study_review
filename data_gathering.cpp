@@ -15,7 +15,9 @@ static int g_tick_index = 0;   // how many times gather_data was called (router 
 static int g_written_rows = 0; // rows written to PBMs so far
 static int g_pbm_width = 0;    // min(road_length, 400)
 static int g_pbm_height = 0;   // total_ticks - settle
-
+static int velocity_sum_left = 0;
+static int velocity_sum_right = 0;
+static int g_flow_samples = 0; // number of times sum_for_flow was recorded
 // Settling period before we start writing PBM rows
 static const int kSettleTicks = 1000;
 
@@ -87,8 +89,6 @@ static void write_lane_pbm_row(FILE *f, Car **lane, int width)
 // Specific gatherer: position-time PBM writer with settling
 static void gather_position_time_data(const SimulationState &S)
 {
-    // Defer writing until settling period is passed
-
     // Lazily open PBM files when we’re ready to write
     if (!g_pbm_open)
     {
@@ -127,6 +127,9 @@ void gather_init(const SimulationState &S, int total_ticks)
     g_total_ticks = total_ticks;
     g_tick_index = 0;
     g_written_rows = 0;
+    g_flow_samples = 0;
+    velocity_sum_left = 0;
+    velocity_sum_right = 0;
 
     // Don’t open PBMs here; we open lazily after settling with known height.
     g_pbm_open = false;
@@ -135,6 +138,42 @@ void gather_init(const SimulationState &S, int total_ticks)
 
     g_pbm_width = std::min(S.hyper.road_length, 400);
     g_pbm_height = std::max(0, total_ticks - kSettleTicks);
+}
+
+void sum_for_flow(const SimulationState &S)
+{
+    const int width = S.hyper.road_length;
+
+    // Sum velocities for left lane (index 0)
+    if (S.hyper.lane_count >= 1)
+    {
+        Car **lane0 = S.roads[0];
+        for (int pos = 0; pos < width; ++pos)
+        {
+            Car *c = lane0[pos];
+            if (c)
+            {
+                velocity_sum_left += c->velocity;
+            }
+        }
+    }
+
+    // Sum velocities for right lane (index 1)
+    if (S.hyper.lane_count >= 2)
+    {
+        Car **lane1 = S.roads[1];
+        for (int pos = 0; pos < width; ++pos)
+        {
+            Car *c = lane1[pos];
+            if (c)
+            {
+                velocity_sum_right += c->velocity;
+            }
+        }
+    }
+
+    // Count this sampling event
+    ++g_flow_samples;
 }
 
 // Router: call specific data gathering based on run arguments (flags in S.hyper)
@@ -150,9 +189,35 @@ void gather_data(const SimulationState &S)
     {
         gather_position_time_data(S);
     }
+    if (S.hyper.csv_output)
+    {
+        // statistics for flow gathered every fifth step only
+        if (g_tick_index % 5 == 0)
+        {
+            sum_for_flow(S);
+        }
+    }
 
     // Add more modes here later:
     // if (S.hyper.some_other_flag) { gather_other_mode(S); }
+}
+
+void calculate_flow(const SimulationState &S)
+{
+    if (!S.hyper.csv_output)
+        return;
+    if (g_flow_samples == 0)
+    {
+        std::printf("0.000, 0.000, 0.000,\n");
+        return;
+    }
+
+    const double denom = static_cast<double>(g_flow_samples) * static_cast<double>(S.hyper.road_length);
+    const double left_flow = static_cast<double>(velocity_sum_left) / denom;
+    const double right_flow = static_cast<double>(velocity_sum_right) / denom;
+    const double avg_flow = (left_flow + right_flow) * 0.5;
+
+    std::printf("%f, %f, %f,\n", left_flow, right_flow, avg_flow);
 }
 
 void gather_close()
@@ -174,6 +239,9 @@ void gather_close()
     g_written_rows = 0;
     g_pbm_width = 0;
     g_pbm_height = 0;
+    g_flow_samples = 0;
+    velocity_sum_left = 0;
+    velocity_sum_right = 0;
 }
 
 // Also close on program exit if not closed explicitly

@@ -20,6 +20,7 @@ struct Hyperparameters
   bool symmetric;
   bool position_time_data;
   bool lookback_zero;
+  bool csv_output;
 };
 
 struct SimulationState

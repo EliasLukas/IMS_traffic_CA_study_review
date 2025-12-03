@@ -18,7 +18,7 @@ static void print_usage(const char *prog)
   std::printf("  --symmetric 0|1         (bool, default 0)\n");
   std::printf("  --road-length N         (int, default 100)\n");
   std::printf("  --lane-count N          (int, default 2)\n");
-  // todo update for lookback-zero and position-time-data
+  // todo update for lookback-zero and position-time-data and csv output
 }
 
 int main(int argc, char **argv)
@@ -34,7 +34,8 @@ int main(int argc, char **argv)
                         .switch_probability = 1.0f,
                         .symmetric = false,
                         .position_time_data = false,
-                        .lookback_zero = false},
+                        .lookback_zero = false,
+                        .csv_output = false},
                     .roads = {nullptr, nullptr},
                     .roads_copy = {nullptr, nullptr},
                     .road_storage = {nullptr, nullptr},
@@ -74,6 +75,10 @@ int main(int argc, char **argv)
     else if (std::strcmp(argv[i], "--lookback-zero") == 0 && i + 1 < argc)
     {
       S.hyper.lookback_zero = std::atoi(argv[++i]) != 0;
+    }
+    else if (std::strcmp(argv[i], "--csv-output") == 0 && i + 1 < argc)
+    {
+      S.hyper.csv_output = std::atoi(argv[++i]) != 0;
     }
     else if (std::strcmp(argv[i], "--road-length") == 0 && i + 1 < argc)
     {
@@ -150,7 +155,7 @@ int main(int argc, char **argv)
     simulation_tick(S);
     gather_data(S);
   }
-
+  calculate_flow(S);
   gather_close();
 
   return 0;
