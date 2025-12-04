@@ -52,14 +52,15 @@ bool left_switch_t1(const SimulationState &S, Car *car) {
   if (gap_ahead < 0) {
     return false;
   }
-  return gap_ahead < car->velocity + 1; // check room ahead in current lane
+  return gap_ahead <= car->velocity + 1; // check room ahead in current lane
 }
 bool left_switch_t2(const SimulationState &S, Car *car) {
   int gap_ahead_other = count_gap_ahead(S, car, false, true);
   if (gap_ahead_other < 0) {
     return false;
   }
-  return gap_ahead_other > car->velocity + 1; // check room ahead in target lane
+  return gap_ahead_other >=
+         car->velocity + 1; // check room ahead in target lane
 }
 bool left_switch_t3(const SimulationState &S, Car *car) {
   int gap_behind = count_gap_behind(S, car, true);
@@ -69,7 +70,7 @@ bool left_switch_t3(const SimulationState &S, Car *car) {
   if (S.hyper.lookback_zero) {
     return gap_behind >= 0;
   } else {
-    return gap_behind >
+    return gap_behind >=
            S.hyper.max_velocity; // check room behind in target lane
   }
 }
@@ -83,14 +84,15 @@ bool right_switch_t1(const SimulationState &S, Car *car) {
   if (gap_ahead < 0) {
     return false;
   }
-  return gap_ahead < car->velocity + 1; // check room ahead in current lane
+  return gap_ahead <= car->velocity + 1; // check room ahead in current lane
 }
 bool right_switch_t2(const SimulationState &S, Car *car) {
   int gap_ahead_other = count_gap_ahead(S, car, false, false);
   if (gap_ahead_other < 0) {
     return false;
   }
-  return gap_ahead_other > car->velocity + 1; // check room ahead in target lane
+  return gap_ahead_other >=
+         car->velocity + 1; // check room ahead in target lane
 }
 bool right_switch_t3(const SimulationState &S, Car *car) {
   int gap_behind = count_gap_behind(S, car, false);
@@ -100,7 +102,7 @@ bool right_switch_t3(const SimulationState &S, Car *car) {
   if (S.hyper.lookback_zero) {
     return gap_behind >= 0;
   } else {
-    return gap_behind >
+    return gap_behind >=
            S.hyper.max_velocity; // check room behind in target lane
   }
 }

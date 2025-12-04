@@ -168,18 +168,16 @@ void DataGatherer::calculate_flow(const SimulationState &S) {
   const double avg_flow = (left_flow + right_flow) / (S.hyper.lane_count);
 
   long gather_cnt = total_ticks_ - k_settle_ticks;
+  //   const double avg_lane_change_per_site_and_time =
+  //       static_cast<double>(lane_swaps_) /
+  //       (S.hyper.lane_count * S.hyper.road_length * gather_cnt);
   const double avg_lane_change_per_site_and_time =
-      static_cast<double>(lane_swaps_) /
-      (S.hyper.lane_count * S.hyper.road_length * gather_cnt);
+      static_cast<double>(lane_swaps_) / (S.hyper.road_length * gather_cnt);
   const double avg_lane_changes_per_site_and_timestep_and_density =
       avg_lane_change_per_site_and_time / S.hyper.density;
-  const double avg_changes_per_car =
-      static_cast<double>(lane_swaps_) /
-      (S.hyper.density * S.hyper.lane_count * S.hyper.road_length * gather_cnt);
-  std::printf("%f, %f, %f, %f, %f, %f\n", left_flow, right_flow, avg_flow,
+  std::printf("%f, %f, %f, %f, %f\n", left_flow, right_flow, avg_flow,
               avg_lane_change_per_site_and_time,
-              avg_lane_changes_per_site_and_timestep_and_density,
-              avg_changes_per_car);
+              avg_lane_changes_per_site_and_timestep_and_density);
 }
 
 // Close data gatherer and clean up
