@@ -2,8 +2,7 @@
 #include "lane_change.hpp"
 #include "velocity.hpp"
 
-void simulation_tick(SimulationState &S)
-{
+void simulation_tick(SimulationState &S) {
   // Lane switching (simultaneous into copy)
   clear_copy(S);
   resolve_lane_switch_write_to_copy(S);
