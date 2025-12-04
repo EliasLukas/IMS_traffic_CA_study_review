@@ -1,6 +1,7 @@
 #pragma once
 #include <cstdio>
 
+// Car structure representing each vehicle
 struct Car {
   int id;
   int lane;
@@ -8,6 +9,7 @@ struct Car {
   int velocity;
 };
 
+// Hyperparameters for the simulation
 struct Hyperparameters {
   int max_velocity;
   float slowdown_probability;
@@ -21,6 +23,7 @@ struct Hyperparameters {
   bool csv_output;
 };
 
+// Simulation state containing roads and hyperparameters
 struct SimulationState {
   Hyperparameters hyper;
   Car **roads[2];

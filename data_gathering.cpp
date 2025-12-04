@@ -4,243 +4,207 @@
 #include <cstdio>
 #include <vector>
 
-// PBM outputs
-static FILE *g_left_pbm = nullptr;
-static FILE *g_right_pbm = nullptr;
-static bool g_pbm_open = false;
-
-// Dimensions and counters
-static int g_total_ticks = 0; // ticks configured at init
-static int g_tick_index =
-    0; // how many times gather_data was called (router tick)
-static int g_written_rows = 0; // rows written to PBMs so far
-static int g_pbm_width = 0;    // min(road_length, 400)
-static int g_pbm_height = 0;   // total_ticks - settle
-static int velocity_sum_left = 0;
-static int velocity_sum_right = 0;
-static int lane_swaps = 0;
-static int g_flow_samples = 0; // number of times sum_for_flow was recorded
-// Settling period before we start writing PBM rows
+// Number of initial ticks to skip for settling
 static const int k_settle_ticks = 1000;
 
-// Open PBM images once, writing headers with known width/height
-static void open_pbm_once(int width, int height) {
-  if (g_pbm_open)
-    return;
-
-  g_left_pbm = std::fopen("left_lane.pbm", "w");
-  g_right_pbm = std::fopen("right_lane.pbm", "w");
-  if (!g_left_pbm || !g_right_pbm) {
-    if (g_left_pbm) {
-      std::fclose(g_left_pbm);
-      g_left_pbm = nullptr;
-    }
-    if (g_right_pbm) {
-      std::fclose(g_right_pbm);
-      g_right_pbm = nullptr;
-    }
-    g_pbm_open = false;
+// PBM output functions
+void DataGatherer::open_pbm_once(int width, int height) {
+  if (pbm_open_) {
     return;
   }
 
-  // PBM ASCII header (P1), width/height known up-front
-  std::fprintf(g_left_pbm, "P1\n%d %d\n", width, height);
-  std::fprintf(g_right_pbm, "P1\n%d %d\n", width, height);
+  left_pbm_ = std::fopen("left_lane.pbm", "w");
+  right_pbm_ = std::fopen("right_lane.pbm", "w");
+  if (!left_pbm_ || !right_pbm_) {
+    if (left_pbm_) {
+      std::fclose(left_pbm_);
+      left_pbm_ = nullptr;
+    }
+    if (right_pbm_) {
+      std::fclose(right_pbm_);
+      right_pbm_ = nullptr;
+    }
+    pbm_open_ = false;
+    return;
+  }
 
-  g_pbm_open = true;
+  std::fprintf(left_pbm_, "P1\n%d %d\n", width, height);
+  std::fprintf(right_pbm_, "P1\n%d %d\n", width, height);
+
+  pbm_open_ = true;
 }
 
-// Write one PBM row: for each car, paint a segment from (pos - (vel - 1))..pos
-static void write_lane_pbm_row(FILE *f, Car **lane, int width) {
-  // Build a row of '0'/'1'
+// Write a single row of PBM data for a lane
+void DataGatherer::write_lane_pbm_row(FILE *f, Car **lane, int width) {
   std::vector<char> row(width, '0');
-
   for (int pos = 0; pos < width; ++pos) {
     Car *c = lane[pos];
-    if (!c)
+    if (!c) {
       continue;
-
+    }
     const int vel = c->velocity;
-    // Segment length equals vel (vel==0 -> single pixel at pos)
     int start = pos - (vel > 0 ? (vel - 1) : 0);
-    if (start < 0)
+    if (start < 0) {
       start = 0;
-
+    }
     for (int i = start; i <= pos; ++i) {
       row[i] = '1';
     }
   }
-
-  // Emit ASCII PBM row with spaces
   for (int x = 0; x < width; ++x) {
     std::fputc(row[x], f);
-    if (x + 1 < width)
+    if (x + 1 < width) {
       std::fputc(' ', f);
+    }
   }
   std::fputc('\n', f);
 }
 
-// Specific gatherer: position-time PBM writer with settling
-static void gather_position_time_data(const SimulationState &S) {
-  // Lazily open PBM files when we’re ready to write
-  if (!g_pbm_open) {
-    g_pbm_width = std::min(S.hyper.road_length, 400);
-    g_pbm_height = std::max(0, g_total_ticks - k_settle_ticks);
-    if (g_pbm_height <= 0)
-      return; // nothing to write for too-short runs
-    open_pbm_once(g_pbm_width, g_pbm_height);
+// Gather position-time data into PBM files
+void DataGatherer::gather_position_time_data(const SimulationState &S) {
+  if (!pbm_open_) {
+    pbm_width_ = std::min(S.hyper.road_length, 400);
+    pbm_height_ = std::max(0, total_ticks_ - k_settle_ticks);
+    if (pbm_height_ <= 0) {
+      return;
+    }
+    open_pbm_once(pbm_width_, pbm_height_);
   }
-
-  if (!g_pbm_open)
+  if (!pbm_open_) {
     return;
-  if (g_written_rows >= g_pbm_height)
+  }
+  if (written_rows_ >= pbm_height_) {
     return;
-
-  // lane[0] -> left_lane.pbm, lane[1] -> right_lane.pbm
-  if (S.hyper.lane_count >= 1 && g_left_pbm) {
-    write_lane_pbm_row(g_left_pbm, S.roads[0], g_pbm_width);
-    std::fflush(g_left_pbm);
   }
-  if (S.hyper.lane_count >= 2 && g_right_pbm) {
-    write_lane_pbm_row(g_right_pbm, S.roads[1], g_pbm_width);
-    std::fflush(g_right_pbm);
+  if (S.hyper.lane_count >= 1 && left_pbm_) {
+    write_lane_pbm_row(left_pbm_, S.roads[0], pbm_width_);
+    std::fflush(left_pbm_);
   }
-
-  ++g_written_rows;
+  if (S.hyper.lane_count >= 2 && right_pbm_) {
+    write_lane_pbm_row(right_pbm_, S.roads[1], pbm_width_);
+    std::fflush(right_pbm_);
+  }
+  ++written_rows_;
 }
 
-void gather_init(const SimulationState &S, int total_ticks) {
-  g_total_ticks = total_ticks;
-  g_tick_index = 0;
-  g_written_rows = 0;
-  g_flow_samples = 0;
-  velocity_sum_left = 0;
-  velocity_sum_right = 0;
-  lane_swaps = 0;
+// Initialize data gatherer
+void DataGatherer::init(const SimulationState &S, int total_ticks) {
+  total_ticks_ = total_ticks;
+  tick_index_ = 0;
+  written_rows_ = 0;
+  flow_samples_ = 0;
+  velocity_sum_left_ = 0;
+  velocity_sum_right_ = 0;
+  lane_swaps_ = 0;
 
-  // Don’t open PBMs here; we open lazily after settling with known height.
-  g_pbm_open = false;
-  g_left_pbm = nullptr;
-  g_right_pbm = nullptr;
+  pbm_open_ = false;
+  left_pbm_ = nullptr;
+  right_pbm_ = nullptr;
 
-  g_pbm_width = std::min(S.hyper.road_length, 400);
-  g_pbm_height = std::max(0, total_ticks - k_settle_ticks);
+  pbm_width_ = std::min(S.hyper.road_length, 400);
+  pbm_height_ = std::max(0, total_ticks - k_settle_ticks);
 }
 
-void sum_for_flow(const SimulationState &S) {
+// Sum velocities for flow calculation
+void DataGatherer::sum_for_flow(const SimulationState &S) {
   const int width = S.hyper.road_length;
-
-  // Sum velocities for left lane (index 0)
   if (S.hyper.lane_count >= 1) {
     Car **lane0 = S.roads[0];
     for (int pos = 0; pos < width; ++pos) {
       Car *c = lane0[pos];
       if (c) {
-        velocity_sum_left += c->velocity;
+        velocity_sum_left_ += c->velocity;
       }
     }
   }
-
-  // Sum velocities for right lane (index 1)
   if (S.hyper.lane_count >= 2) {
     Car **lane1 = S.roads[1];
     for (int pos = 0; pos < width; ++pos) {
       Car *c = lane1[pos];
       if (c) {
-        velocity_sum_right += c->velocity;
+        velocity_sum_right_ += c->velocity;
       }
     }
   }
-
-  // Count this sampling event
-  ++g_flow_samples;
+  ++flow_samples_;
 }
 
-// Router: call specific data gathering based on run arguments (flags in
-// S.hyper)
-void gather_data(const SimulationState &S) {
-  // One call per simulation tick
-  ++g_tick_index;
-
-  if (g_tick_index < k_settle_ticks)
+// Gather data at each tick
+void DataGatherer::gather(const SimulationState &S) {
+  ++tick_index_;
+  if (tick_index_ < k_settle_ticks) {
     return;
-
+  }
   if (S.hyper.position_time_data) {
     gather_position_time_data(S);
   }
   if (S.hyper.csv_output) {
-    // statistics for flow gathered every fifth step only
-    if (g_tick_index % 5 == 0) {
+    if (tick_index_ % 5 == 0) {
       sum_for_flow(S);
     }
   }
-
-  // Add more modes here later:
-  // if (S.hyper.some_other_flag) { gather_other_mode(S); }
 }
 
-void register_event_lane_swap() {
-  if (g_tick_index >= k_settle_ticks)
-    lane_swaps++;
+// Register a lane swap event
+void DataGatherer::register_event_lane_swap() {
+  if (tick_index_ >= k_settle_ticks) {
+    lane_swaps_++;
+  }
 }
 
-void calculate_flow(const SimulationState &S) {
-  if (!S.hyper.csv_output)
+// Calculate and print flow statistics
+void DataGatherer::calculate_flow(const SimulationState &S) {
+  if (!S.hyper.csv_output) {
     return;
-  if (g_flow_samples == 0) {
+  }
+  if (flow_samples_ == 0) {
     std::printf("0.000, 0.000, 0.000,\n");
     return;
   }
-
-  // flow stats
-  const double denom = static_cast<double>(g_flow_samples) *
+  const double denom = static_cast<double>(flow_samples_) *
                        static_cast<double>(S.hyper.road_length);
-  const double left_flow = static_cast<double>(velocity_sum_left) / denom;
-  const double right_flow = static_cast<double>(velocity_sum_right) / denom;
+  const double left_flow = static_cast<double>(velocity_sum_left_) / denom;
+  const double right_flow = static_cast<double>(velocity_sum_right_) / denom;
   const double avg_flow = (left_flow + right_flow) / (S.hyper.lane_count);
 
-  // lane changes per site and time step stats
-
-  long gather_cnt = g_total_ticks - k_settle_ticks;
+  long gather_cnt = total_ticks_ - k_settle_ticks;
   const double avg_lane_change_per_site_and_time =
-      static_cast<double>(lane_swaps) /
+      static_cast<double>(lane_swaps_) /
       (S.hyper.lane_count * S.hyper.road_length * gather_cnt);
-
   const double avg_lane_changes_per_site_and_timestep_and_density =
       avg_lane_change_per_site_and_time / S.hyper.density;
   const double avg_changes_per_car =
-      static_cast<double>(lane_swaps) /
+      static_cast<double>(lane_swaps_) /
       (S.hyper.density * S.hyper.lane_count * S.hyper.road_length * gather_cnt);
-
-  std::printf("%f, %f, %f, %f, %f, %f,\n", left_flow, right_flow, avg_flow,
+  std::printf("%f, %f, %f, %f, %f, %f\n", left_flow, right_flow, avg_flow,
               avg_lane_change_per_site_and_time,
               avg_lane_changes_per_site_and_timestep_and_density,
               avg_changes_per_car);
 }
 
-void gather_close() {
-  if (g_left_pbm) {
-    std::fclose(g_left_pbm);
-    g_left_pbm = nullptr;
+// Close data gatherer and clean up
+void DataGatherer::close() {
+  if (left_pbm_) {
+    std::fclose(left_pbm_);
+    left_pbm_ = nullptr;
   }
-  if (g_right_pbm) {
-    std::fclose(g_right_pbm);
-    g_right_pbm = nullptr;
+  if (right_pbm_) {
+    std::fclose(right_pbm_);
+    right_pbm_ = nullptr;
   }
-  g_pbm_open = false;
-
-  g_total_ticks = 0;
-  g_tick_index = 0;
-  g_written_rows = 0;
-  g_pbm_width = 0;
-  g_pbm_height = 0;
-  g_flow_samples = 0;
-  velocity_sum_left = 0;
-  velocity_sum_right = 0;
+  pbm_open_ = false;
+  total_ticks_ = 0;
+  tick_index_ = 0;
+  written_rows_ = 0;
+  pbm_width_ = 0;
+  pbm_height_ = 0;
+  flow_samples_ = 0;
+  velocity_sum_left_ = 0;
+  velocity_sum_right_ = 0;
 }
 
-// Also close on program exit if not closed explicitly
-struct GatherCloseGuard {
-  ~GatherCloseGuard() { gather_close(); }
-};
-static GatherCloseGuard g_guard;
+// Singleton instance
+DataGatherer &get_data_gatherer() {
+  static DataGatherer instance;
+  return instance;
+}

@@ -2,6 +2,7 @@
 #include "lane_change.hpp"
 #include "velocity.hpp"
 
+// Advance the simulation by one tick
 void simulation_tick(SimulationState &S) {
   // Lane switching (simultaneous into copy)
   clear_copy(S);

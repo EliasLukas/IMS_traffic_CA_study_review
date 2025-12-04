@@ -17,7 +17,9 @@ static void print_usage(const char *prog) {
   std::printf("  --symmetric 0|1         (bool, default 0)\n");
   std::printf("  --road-length N         (int, default 100)\n");
   std::printf("  --lane-count N          (int, default 2)\n");
-  // todo update for lookback-zero and position-time-data and csv output
+  std::printf("  --position-time-data 0|1 (bool, default 0)\n");
+  std::printf("  --lookback-zero 0|1     (bool, default 0)\n");
+  std::printf("  --csv-output 0|1        (bool, default 0)\n");
 }
 
 int main(int argc, char **argv) {
@@ -107,17 +109,24 @@ int main(int argc, char **argv) {
     S.hyper.switch_probability = 1.0f;
   }
 
+  // Initialize simulation state
   init_state(S);
+  // Populate cars on the road
   populate_cars(S);
-  gather_init(S, ticks);
+  // Get data gatherer and initialize it
+  DataGatherer &DG = get_data_gatherer();
+  DG.init(S, ticks);
 
+  // Main simulation loop
   for (int tick = 0; tick < ticks; ++tick) {
-    // print_state(S);
-    simulation_tick(S);
-    gather_data(S);
+    simulation_tick(S); // Advance simulation by one tick
+    DG.gather(S);       // Gather data for this tick
   }
-  calculate_flow(S);
-  gather_close();
+  // Finalize data gathering and output results
+  DG.calculate_flow(S);
+  DG.close();
+  // Deallocate simulation state
+  dealocate_state(S);
 
   return 0;
 }

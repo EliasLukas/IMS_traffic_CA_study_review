@@ -2,14 +2,16 @@
 #include "data_gathering.hpp"
 #include <random>
 
+// Count the gap ahead of a car in the specified lane
 int count_gap_ahead(const SimulationState &S, Car *car, bool current_lane,
                     bool look_left) {
-  int lane =
-      current_lane ? car->lane : (look_left ? car->lane - 1 : car->lane + 1);
-  if (lane < 0 || lane >= S.hyper.lane_count) {
+  int lane = current_lane
+                 ? car->lane
+                 : (look_left ? car->lane - 1 : car->lane + 1); // select lane
+  if (lane < 0 || lane >= S.hyper.lane_count) {                 // invalid lane
     return -1;
   }
-  int gap = 0;
+  int gap = 0; // count empty cells ahead
   int position = car->position;
   Car **current_road = S.roads[lane];
   for (int i = 1; i <= S.hyper.max_velocity + 2; i++) {
@@ -23,12 +25,13 @@ int count_gap_ahead(const SimulationState &S, Car *car, bool current_lane,
   return gap;
 }
 
+// Count the gap behind a car in the specified lane
 int count_gap_behind(const SimulationState &S, Car *car, bool look_left) {
-  int lane = look_left ? car->lane - 1 : car->lane + 1;
-  if (lane < 0 || lane >= S.hyper.lane_count) {
+  int lane = look_left ? car->lane - 1 : car->lane + 1; // select lane
+  if (lane < 0 || lane >= S.hyper.lane_count) {         // invalid lane
     return -2;
   }
-  int gap = -1;
+  int gap = -1; // count empty cells behind
   int position = car->position;
   Car **current_road = S.roads[lane];
   for (int i = 0; i <= S.hyper.max_velocity + 2; i++) {
@@ -43,19 +46,20 @@ int count_gap_behind(const SimulationState &S, Car *car, bool look_left) {
   return gap;
 }
 
+// Lane change decision tests
 bool left_switch_t1(const SimulationState &S, Car *car) {
   int gap_ahead = count_gap_ahead(S, car, true, false);
   if (gap_ahead < 0) {
     return false;
   }
-  return gap_ahead < car->velocity + 1;
+  return gap_ahead < car->velocity + 1; // check room ahead in current lane
 }
 bool left_switch_t2(const SimulationState &S, Car *car) {
   int gap_ahead_other = count_gap_ahead(S, car, false, true);
   if (gap_ahead_other < 0) {
     return false;
   }
-  return gap_ahead_other > car->velocity + 1;
+  return gap_ahead_other > car->velocity + 1; // check room ahead in target lane
 }
 bool left_switch_t3(const SimulationState &S, Car *car) {
   int gap_behind = count_gap_behind(S, car, true);
@@ -65,10 +69,12 @@ bool left_switch_t3(const SimulationState &S, Car *car) {
   if (S.hyper.lookback_zero) {
     return gap_behind >= 0;
   } else {
-    return gap_behind > S.hyper.max_velocity;
+    return gap_behind >
+           S.hyper.max_velocity; // check room behind in target lane
   }
 }
 
+// Lane change decision tests
 bool right_switch_t1(const SimulationState &S, Car *car) {
   if (!S.hyper.symmetric) {
     return true;
@@ -77,14 +83,14 @@ bool right_switch_t1(const SimulationState &S, Car *car) {
   if (gap_ahead < 0) {
     return false;
   }
-  return gap_ahead < car->velocity + 1;
+  return gap_ahead < car->velocity + 1; // check room ahead in current lane
 }
 bool right_switch_t2(const SimulationState &S, Car *car) {
   int gap_ahead_other = count_gap_ahead(S, car, false, false);
   if (gap_ahead_other < 0) {
     return false;
   }
-  return gap_ahead_other > car->velocity + 1;
+  return gap_ahead_other > car->velocity + 1; // check room ahead in target lane
 }
 bool right_switch_t3(const SimulationState &S, Car *car) {
   int gap_behind = count_gap_behind(S, car, false);
@@ -94,16 +100,19 @@ bool right_switch_t3(const SimulationState &S, Car *car) {
   if (S.hyper.lookback_zero) {
     return gap_behind >= 0;
   } else {
-    return gap_behind > S.hyper.max_velocity;
+    return gap_behind >
+           S.hyper.max_velocity; // check room behind in target lane
   }
 }
 
+// rng generator
 static std::mt19937 &get_rng() {
   static std::random_device rd;
   static std::mt19937 gen(rd());
   return gen;
 }
 
+// Decide whether to switch lane to the left
 bool switch_lane_left(const SimulationState &S, Car *car) {
   if (car->lane <= 0) {
     return false;
@@ -114,6 +123,7 @@ bool switch_lane_left(const SimulationState &S, Car *car) {
          left_switch_t3(S, car) && rand_val <= S.hyper.switch_probability;
 }
 
+// Decide whether to switch lane to the right
 bool switch_lane_right(const SimulationState &S, Car *car) {
   if (car->lane >= S.hyper.lane_count - 1) {
     return false;
@@ -124,6 +134,7 @@ bool switch_lane_right(const SimulationState &S, Car *car) {
          right_switch_t3(S, car) && rand_val <= S.hyper.switch_probability;
 }
 
+// Resolve lane switching and write to copy roads
 void resolve_lane_switch_write_to_copy(SimulationState &S) {
   for (int lane_index = 0; lane_index < S.hyper.lane_count; lane_index++) {
     for (int pos_index = 0; pos_index < S.hyper.road_length; pos_index++) {
@@ -142,13 +153,13 @@ void resolve_lane_switch_write_to_copy(SimulationState &S) {
         car->lane -= 1;
 
         // statistics gathering
-        register_event_lane_swap();
+        get_data_gatherer().register_event_lane_swap();
       } else if (right_switch) {
         S.roads_copy[lane_index + 1][pos_index] = car;
         car->lane += 1;
 
         // statistics gathering
-        register_event_lane_swap();
+        get_data_gatherer().register_event_lane_swap();
       } else {
         S.roads_copy[lane_index][pos_index] = car;
       }
@@ -156,6 +167,7 @@ void resolve_lane_switch_write_to_copy(SimulationState &S) {
   }
 }
 
+// Utility function to clear the copy roads
 void clear_copy(SimulationState &S) {
   for (int l = 0; l < S.hyper.lane_count; ++l) {
     for (int p = 0; p < S.hyper.road_length; ++p) {
@@ -164,6 +176,7 @@ void clear_copy(SimulationState &S) {
   }
 }
 
+// Utility function to copy from copy roads back to main roads
 void copy_into_roads(SimulationState &S) {
   for (int l = 0; l < S.hyper.lane_count; ++l) {
     for (int p = 0; p < S.hyper.road_length; ++p) {
