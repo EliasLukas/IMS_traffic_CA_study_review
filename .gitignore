@@ -1,5 +1,4 @@
 *.exe
 *.o
 ims_traffic
-*.pbm
 obj/
