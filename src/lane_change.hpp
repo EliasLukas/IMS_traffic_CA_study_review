@@ -1,3 +1,9 @@
+/////////////////////////////////////////
+// Project: IMS 2025 T8
+// Authors: Lukas Elias, xeliasl00
+//          Jacek Folwarczny, xfolwaj00
+/////////////////////////////////////////
+
 #pragma once
 #include "types.hpp"
 

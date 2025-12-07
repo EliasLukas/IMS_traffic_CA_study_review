@@ -1,8 +1,15 @@
+/////////////////////////////////////////
+// Project: IMS 2025 T8
+// Authors: Lukas Elias, xeliasl00
+//          Jacek Folwarczny, xfolwaj00
+/////////////////////////////////////////
+
 #pragma once
 #include "types.hpp"
 
 // DataGatherer class for collecting simulation data
-class DataGatherer {
+class DataGatherer
+{
 public:
   void init(const SimulationState &S, int total_ticks);
   void gather(const SimulationState &S);

@@ -1,9 +1,16 @@
+/////////////////////////////////////////
+// Project: IMS 2025 T8
+// Authors: Lukas Elias, xeliasl00
+//          Jacek Folwarczny, xfolwaj00
+/////////////////////////////////////////
+
 #include "simulation.hpp"
 #include "lane_change.hpp"
 #include "velocity.hpp"
 
 // Advance the simulation by one tick
-void simulation_tick(SimulationState &S) {
+void simulation_tick(SimulationState &S)
+{
   // Lane switching (simultaneous into copy)
   clear_copy(S);
   resolve_lane_switch_write_to_copy(S);

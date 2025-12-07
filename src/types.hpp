@@ -1,8 +1,15 @@
+/////////////////////////////////////////
+// Project: IMS 2025 T8
+// Authors: Lukas Elias, xeliasl00
+//          Jacek Folwarczny, xfolwaj00
+/////////////////////////////////////////
+
 #pragma once
 #include <cstdio>
 
 // Car structure representing each vehicle
-struct Car {
+struct Car
+{
   int id;
   int lane;
   int position;
@@ -10,7 +17,8 @@ struct Car {
 };
 
 // Hyperparameters for the simulation
-struct Hyperparameters {
+struct Hyperparameters
+{
   int max_velocity;
   float slowdown_probability;
   int lane_count;
@@ -24,7 +32,8 @@ struct Hyperparameters {
 };
 
 // Simulation state containing roads and hyperparameters
-struct SimulationState {
+struct SimulationState
+{
   Hyperparameters hyper;
   Car **roads[2];
   Car **roads_copy[2];

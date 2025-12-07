@@ -17,7 +17,7 @@ SRCS := \
 # Object files in obj/
 OBJS := $(patsubst $(SRC_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(SRCS))
 
-.PHONY: all clean run dirs
+.PHONY: all clean run dirs submit
 
 all: dirs $(TARGET)
 
@@ -36,3 +36,11 @@ run: $(TARGET)
 
 clean:
 	rm -f $(OBJS) $(TARGET)
+
+submit:
+	tar czf T8_xeliasl00_xfolwaj00.tar.gz \
+		Makefile \
+		run.sh \
+		report.pdf \
+		src \
+		data

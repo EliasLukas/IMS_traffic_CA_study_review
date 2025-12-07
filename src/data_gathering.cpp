@@ -1,3 +1,9 @@
+/////////////////////////////////////////
+// Project: IMS 2025 T8
+// Authors: Lukas Elias, xeliasl00
+//          Jacek Folwarczny, xfolwaj00
+/////////////////////////////////////////
+
 #include "data_gathering.hpp"
 #include "types.hpp"
 #include <algorithm>
@@ -8,19 +14,24 @@
 static const int k_settle_ticks = 1000;
 
 // PBM output functions
-void DataGatherer::open_pbm_once(int width, int height) {
-  if (pbm_open_) {
+void DataGatherer::open_pbm_once(int width, int height)
+{
+  if (pbm_open_)
+  {
     return;
   }
 
   left_pbm_ = std::fopen("left_lane.pbm", "w");
   right_pbm_ = std::fopen("right_lane.pbm", "w");
-  if (!left_pbm_ || !right_pbm_) {
-    if (left_pbm_) {
+  if (!left_pbm_ || !right_pbm_)
+  {
+    if (left_pbm_)
+    {
       std::fclose(left_pbm_);
       left_pbm_ = nullptr;
     }
-    if (right_pbm_) {
+    if (right_pbm_)
+    {
       std::fclose(right_pbm_);
       right_pbm_ = nullptr;
     }
@@ -35,25 +46,32 @@ void DataGatherer::open_pbm_once(int width, int height) {
 }
 
 // Write a single row of PBM data for a lane
-void DataGatherer::write_lane_pbm_row(FILE *f, Car **lane, int width) {
+void DataGatherer::write_lane_pbm_row(FILE *f, Car **lane, int width)
+{
   std::vector<char> row(width, '0');
-  for (int pos = 0; pos < width; ++pos) {
+  for (int pos = 0; pos < width; ++pos)
+  {
     Car *c = lane[pos];
-    if (!c) {
+    if (!c)
+    {
       continue;
     }
     const int vel = c->velocity;
     int start = pos - (vel > 0 ? (vel - 1) : 0);
-    if (start < 0) {
+    if (start < 0)
+    {
       start = 0;
     }
-    for (int i = start; i <= pos; ++i) {
+    for (int i = start; i <= pos; ++i)
+    {
       row[i] = '1';
     }
   }
-  for (int x = 0; x < width; ++x) {
+  for (int x = 0; x < width; ++x)
+  {
     std::fputc(row[x], f);
-    if (x + 1 < width) {
+    if (x + 1 < width)
+    {
       std::fputc(' ', f);
     }
   }
@@ -61,26 +79,33 @@ void DataGatherer::write_lane_pbm_row(FILE *f, Car **lane, int width) {
 }
 
 // Gather position-time data into PBM files
-void DataGatherer::gather_position_time_data(const SimulationState &S) {
-  if (!pbm_open_) {
+void DataGatherer::gather_position_time_data(const SimulationState &S)
+{
+  if (!pbm_open_)
+  {
     pbm_width_ = std::min(S.hyper.road_length, 400);
     pbm_height_ = std::max(0, total_ticks_ - k_settle_ticks);
-    if (pbm_height_ <= 0) {
+    if (pbm_height_ <= 0)
+    {
       return;
     }
     open_pbm_once(pbm_width_, pbm_height_);
   }
-  if (!pbm_open_) {
+  if (!pbm_open_)
+  {
     return;
   }
-  if (written_rows_ >= pbm_height_) {
+  if (written_rows_ >= pbm_height_)
+  {
     return;
   }
-  if (S.hyper.lane_count >= 1 && left_pbm_) {
+  if (S.hyper.lane_count >= 1 && left_pbm_)
+  {
     write_lane_pbm_row(left_pbm_, S.roads[0], pbm_width_);
     std::fflush(left_pbm_);
   }
-  if (S.hyper.lane_count >= 2 && right_pbm_) {
+  if (S.hyper.lane_count >= 2 && right_pbm_)
+  {
     write_lane_pbm_row(right_pbm_, S.roads[1], pbm_width_);
     std::fflush(right_pbm_);
   }
@@ -88,7 +113,8 @@ void DataGatherer::gather_position_time_data(const SimulationState &S) {
 }
 
 // Initialize data gatherer
-void DataGatherer::init(const SimulationState &S, int total_ticks) {
+void DataGatherer::init(const SimulationState &S, int total_ticks)
+{
   total_ticks_ = total_ticks;
   tick_index_ = 0;
   written_rows_ = 0;
@@ -106,22 +132,29 @@ void DataGatherer::init(const SimulationState &S, int total_ticks) {
 }
 
 // Sum velocities for flow calculation
-void DataGatherer::sum_for_flow(const SimulationState &S) {
+void DataGatherer::sum_for_flow(const SimulationState &S)
+{
   const int width = S.hyper.road_length;
-  if (S.hyper.lane_count >= 1) {
+  if (S.hyper.lane_count >= 1)
+  {
     Car **lane0 = S.roads[0];
-    for (int pos = 0; pos < width; ++pos) {
+    for (int pos = 0; pos < width; ++pos)
+    {
       Car *c = lane0[pos];
-      if (c) {
+      if (c)
+      {
         velocity_sum_left_ += c->velocity;
       }
     }
   }
-  if (S.hyper.lane_count >= 2) {
+  if (S.hyper.lane_count >= 2)
+  {
     Car **lane1 = S.roads[1];
-    for (int pos = 0; pos < width; ++pos) {
+    for (int pos = 0; pos < width; ++pos)
+    {
       Car *c = lane1[pos];
-      if (c) {
+      if (c)
+      {
         velocity_sum_right_ += c->velocity;
       }
     }
@@ -130,34 +163,44 @@ void DataGatherer::sum_for_flow(const SimulationState &S) {
 }
 
 // Gather data at each tick
-void DataGatherer::gather(const SimulationState &S) {
+void DataGatherer::gather(const SimulationState &S)
+{
   ++tick_index_;
-  if (tick_index_ < k_settle_ticks) {
+  if (tick_index_ < k_settle_ticks)
+  {
     return;
   }
-  if (S.hyper.position_time_data) {
+  if (S.hyper.position_time_data)
+  {
     gather_position_time_data(S);
   }
-  if (S.hyper.csv_output) {
-    if (tick_index_ % 5 == 0) {
+  if (S.hyper.csv_output)
+  {
+    if (tick_index_ % 5 == 0)
+    {
       sum_for_flow(S);
     }
   }
 }
 
 // Register a lane swap event
-void DataGatherer::register_event_lane_swap() {
-  if (tick_index_ >= k_settle_ticks) {
+void DataGatherer::register_event_lane_swap()
+{
+  if (tick_index_ >= k_settle_ticks)
+  {
     lane_swaps_++;
   }
 }
 
 // Calculate and print flow statistics
-void DataGatherer::calculate_flow(const SimulationState &S) {
-  if (!S.hyper.csv_output) {
+void DataGatherer::calculate_flow(const SimulationState &S)
+{
+  if (!S.hyper.csv_output)
+  {
     return;
   }
-  if (flow_samples_ == 0) {
+  if (flow_samples_ == 0)
+  {
     std::printf("0.000, 0.000, 0.000,\n");
     return;
   }
@@ -181,12 +224,15 @@ void DataGatherer::calculate_flow(const SimulationState &S) {
 }
 
 // Close data gatherer and clean up
-void DataGatherer::close() {
-  if (left_pbm_) {
+void DataGatherer::close()
+{
+  if (left_pbm_)
+  {
     std::fclose(left_pbm_);
     left_pbm_ = nullptr;
   }
-  if (right_pbm_) {
+  if (right_pbm_)
+  {
     std::fclose(right_pbm_);
     right_pbm_ = nullptr;
   }
@@ -202,7 +248,8 @@ void DataGatherer::close() {
 }
 
 // Singleton instance
-DataGatherer &get_data_gatherer() {
+DataGatherer &get_data_gatherer()
+{
   static DataGatherer instance;
   return instance;
 }
